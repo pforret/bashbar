@@ -5,6 +5,42 @@
 ##   source "${SCRIPT_DIR}/core.sh"
 
 #####################################################################
+## ENV LOADING
+##
+## Loads .env files in order (later files override earlier ones):
+##   1. ${SCRIPT_DIR}/.env              — shared secrets for all plugins
+##   2. ${SCRIPT_DIR}/.${prefix}.env    — plugin-specific secrets
+##   3. ${PLUGIN_DIR}/.env              — shared secrets in SwiftBar folder
+##   4. ${PLUGIN_DIR}/.${prefix}.env    — plugin-specific in SwiftBar folder
+##
+## The prefix is the plugin name without refresh interval and extension,
+## e.g. "check_api" from "check_api.1h.sh".
+#####################################################################
+
+_swiftbar_load_env() {
+  local script_dir="${1}"
+  local prefix
+  prefix="$(basename "$0")"
+  prefix="${prefix%%.*}"
+
+  local plugin_dir
+  plugin_dir="${SWIFTBAR_PLUGINS_PATH:-$(defaults read com.ameba.SwiftBar PluginDirectory 2>/dev/null || true)}"
+
+  # 1. shared .env from installation folder
+  [[ -f "${script_dir}/.env" ]] && source "${script_dir}/.env"
+  # 2. plugin-specific .env from installation folder
+  [[ -f "${script_dir}/.${prefix}.env" ]] && source "${script_dir}/.${prefix}.env"
+  # 3. shared .env from SwiftBar plugin folder
+  if [[ -n "${plugin_dir}" ]] && [[ -d "${plugin_dir}" ]] && [[ "${plugin_dir}" != "${script_dir}" ]]; then
+    [[ -f "${plugin_dir}/.env" ]] && source "${plugin_dir}/.env"
+    # 4. plugin-specific .env from SwiftBar plugin folder
+    [[ -f "${plugin_dir}/.${prefix}.env" ]] && source "${plugin_dir}/.${prefix}.env"
+  fi
+}
+
+_swiftbar_load_env "${SCRIPT_DIR}"
+
+#####################################################################
 ## OUTPUT FUNCTIONS — build SwiftBar-formatted lines
 ##
 ## All output is buffered so you can group data collection and output
