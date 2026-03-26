@@ -63,8 +63,16 @@ color_for_pct() {
 ##   → adds dropdown menu line:   ---\n💾 Disk: 28% | color=green
 ##   icon is shared between header and dropdown
 ##
+## sf_metric "sun.max.fill" "22°C" "Weather: 22°C Sunny" "orange"
+##   → like metric but uses SF Symbol via sfimage= and sfcolor=
+##   → header:  22°C | sfimage=sun.max.fill sfcolor=orange dropdown=false
+##   → menu:    ---\n:sun.max.fill: Weather: 22°C Sunny | sfcolor=orange
+##
 ## detail_line "Size: 1.8Ti  Used: 501Gi"
 ##   → indented sub-item in the dropdown (prefixed with --)
+##
+## sf_detail_line "thermometer.medium" "Temperature: 22°C"
+##   → indented sub-item with inline SF Symbol: --:thermometer.medium: Temperature: 22°C
 ##
 ## swiftbar_flush
 ##   → prints all header lines, then all dropdown lines
@@ -84,6 +92,17 @@ metric() {
   fi
 }
 
+sf_metric() {
+  local sfimage="${1}" header_text="${2}" menu_text="${3}" sfcolor="${4:-}"
+  if [[ -n "${sfcolor}" ]]; then
+    _swiftbar_headers+="${header_text} | sfimage=${sfimage} sfcolor=${sfcolor} dropdown=false"$'\n'
+    _swiftbar_dropdown+="---"$'\n'":${sfimage}: ${menu_text} | sfcolor=${sfcolor}"$'\n'
+  else
+    _swiftbar_headers+="${header_text} | sfimage=${sfimage} dropdown=false"$'\n'
+    _swiftbar_dropdown+="---"$'\n'":${sfimage}: ${menu_text}"$'\n'
+  fi
+}
+
 menu_line() {
   local text="${1}"
   _swiftbar_dropdown+="---"$'\n'"${text}"$'\n'
@@ -92,6 +111,11 @@ menu_line() {
 detail_line() {
   local text="${1}"
   _swiftbar_dropdown+="--${text}"$'\n'
+}
+
+sf_detail_line() {
+  local sfimage="${1}" text="${2}"
+  _swiftbar_dropdown+="--:${sfimage}: ${text}"$'\n'
 }
 
 swiftbar_flush() {
