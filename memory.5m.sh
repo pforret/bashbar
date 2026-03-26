@@ -12,6 +12,14 @@ source "${SCRIPT_DIR}/core.sh"
 ## PLUGIN LOGIC
 #####################################################################
 
+color_for_pct() {
+  local pct="${1}"
+  if [[ "${pct}" -ge 90 ]]; then echo "red"
+  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
+  else echo "green"
+  fi
+}
+
 plugin_output() {
   local page_size total_bytes total_mb
   page_size=$(vm_stat | awk '/page size of/{print $8}')

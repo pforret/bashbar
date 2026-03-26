@@ -12,8 +12,7 @@
 ##      refresh: 1s/10s/1m/5m/10m/1h/1d (or omit for manual only)
 ##   2. the metadata block above (title, version, desc)
 ##   3. the plugin_output() function with your own logic
-## The source line below loads shared helpers from core.sh.
-## See core.sh for available functions: color_for_pct, get_disk, get_memory, etc.
+## The source line below loads core.sh with SwiftBar output + install helpers.
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")" && pwd)"
 source "${SCRIPT_DIR}/core.sh"
@@ -28,6 +27,18 @@ source "${SCRIPT_DIR}/core.sh"
 ##   detail_line "text"      — indented sub-item in dropdown
 ##   swiftbar_flush          — call once at the end to print everything
 #####################################################################
+
+color_for_pct() {
+  local pct="${1}"
+  if [[ "${pct}" -ge 90 ]]; then echo "red"
+  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
+  else echo "green"
+  fi
+}
+
+get_disk() {
+  df "$HOME" | awk 'NR==2 {gsub(/%/,"",$5); print $5}'
+}
 
 plugin_output() {
   local pct

@@ -9,7 +9,78 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")" && pwd)"
 source "${SCRIPT_DIR}/core.sh"
 
 #####################################################################
-## PLUGIN LOGIC
+## HELPERS
+#####################################################################
+
+color_for_pct() {
+  local pct="${1}"
+  if [[ "${pct}" -ge 90 ]]; then echo "red"
+  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
+  else echo "green"
+  fi
+}
+
+battery_color() {
+  local pct="${1}"
+  if [[ "${pct}" -le 10 ]]; then echo "red"
+  elif [[ "${pct}" -le 25 ]]; then echo "orange"
+  else echo "green"
+  fi
+}
+
+format_bytes_per_sec() {
+  local bps="${1}"
+  if [[ "${bps}" -ge 1073741824 ]]; then
+    awk "BEGIN {printf \"%.1f GB/s\", ${bps}/1073741824}"
+  elif [[ "${bps}" -ge 1048576 ]]; then
+    awk "BEGIN {printf \"%.1f MB/s\", ${bps}/1048576}"
+  elif [[ "${bps}" -ge 1024 ]]; then
+    awk "BEGIN {printf \"%.1f KB/s\", ${bps}/1024}"
+  else
+    echo "${bps} B/s"
+  fi
+}
+
+#####################################################################
+## DATA COLLECTION
+#####################################################################
+
+get_disk() {
+  df "$HOME" | awk 'NR==2 {gsub(/%/,"",$5); print $5}'
+}
+
+get_memory() {
+  local page_size total_bytes active wired used_mb total_mb
+  page_size=$(vm_stat | awk '/page size of/{print $8}')
+  total_bytes=$(sysctl -n hw.memsize)
+  total_mb=$((total_bytes / 1024 / 1024))
+  active=$(vm_stat | awk '/Pages active/{gsub(/\./,"",$3); print $3}')
+  wired=$(vm_stat | awk '/Pages wired/{gsub(/\./,"",$4); print $4}')
+  used_mb=$(( (active + wired) * page_size / 1024 / 1024 ))
+  echo "$((used_mb * 100 / total_mb))"
+}
+
+get_cpu() {
+  local idle
+  idle=$(top -l 1 -n 0 | awk '/CPU usage/{gsub(/%/,"",$7); print $7}')
+  awk "BEGIN {printf \"%.0f\", 100 - ${idle}}"
+}
+
+get_battery() {
+  pmset -g batt | awk '/-InternalBattery/{gsub(/;/,""); print $3+0}'
+}
+
+get_network() {
+  local iface="en0"
+  local in1 out1 in2 out2
+  read -r in1 out1 <<< "$(netstat -ib | awk -v iface="${iface}" '$1==iface && $3~/<Link#/{print $7, $10; exit}')"
+  sleep 2
+  read -r in2 out2 <<< "$(netstat -ib | awk -v iface="${iface}" '$1==iface && $3~/<Link#/{print $7, $10; exit}')"
+  echo "$(( (in2 - in1) / 2 )) $(( (out2 - out1) / 2 ))"
+}
+
+#####################################################################
+## PLUGIN OUTPUT
 #####################################################################
 
 plugin_output() {
