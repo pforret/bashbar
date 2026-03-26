@@ -12,14 +12,6 @@ source "${SCRIPT_DIR}/core.sh"
 ## PLUGIN LOGIC
 #####################################################################
 
-color_for_pct() {
-  local pct="${1}"
-  if [[ "${pct}" -ge 90 ]]; then echo "red"
-  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
-  else echo "green"
-  fi
-}
-
 plugin_output() {
   local page_size total_bytes total_mb
   page_size=$(vm_stat | awk '/page size of/{print $8}')
@@ -49,8 +41,6 @@ plugin_output() {
   detail_line "$(printf "Inactive:    %5d MB" "$((inactive * page_size / 1024 / 1024))")"
   detail_line "$(printf "Free:        %5d MB" "$((free * page_size / 1024 / 1024))")"
   detail_line "$(printf "Speculative: %5d MB" "$((speculative * page_size / 1024 / 1024))")"
-  menu_line "Refresh | refresh=true"
-  swiftbar_flush
 }
 
 swiftbar_run "$@"

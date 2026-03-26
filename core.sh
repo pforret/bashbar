@@ -41,6 +41,18 @@ _swiftbar_load_env() {
 _swiftbar_load_env "${SCRIPT_DIR}"
 
 #####################################################################
+## HELPER FUNCTIONS
+#####################################################################
+
+color_for_pct() {
+  local pct="${1}" warn="${2:-75}" crit="${3:-90}" default="${4:-white}"
+  if [[ "${pct}" -ge "${crit}" ]]; then echo "red"
+  elif [[ "${pct}" -ge "${warn}" ]]; then echo "orange"
+  else echo "${default}"
+  fi
+}
+
+#####################################################################
 ## OUTPUT FUNCTIONS — build SwiftBar-formatted lines
 ##
 ## All output is buffered so you can group data collection and output
@@ -164,6 +176,8 @@ swiftbar_run() {
     install)        swiftbar_install ;;
     uninstall)      swiftbar_uninstall ;;
     help|--help|-h) swiftbar_help ;;
-    *)              plugin_output ;;
+    *)              plugin_output
+                    menu_line "Refresh | refresh=true"
+                    swiftbar_flush ;;
   esac
 }

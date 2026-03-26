@@ -23,18 +23,10 @@ source "${SCRIPT_DIR}/core.sh"
 ## Output functions from core.sh (see docs/SwiftBar/plugins.md for full reference):
 ##   metric "icon" "header" "menu text" "color"
 ##     — icon + header in menu bar, icon + menu text in dropdown (same icon for both)
-##   menu_line "text"        — dropdown-only item (e.g. Refresh)
+##   menu_line "text"        — dropdown-only item
 ##   detail_line "text"      — indented sub-item in dropdown
-##   swiftbar_flush          — call once at the end to print everything
+## Refresh button and flush are handled automatically by core.sh.
 #####################################################################
-
-color_for_pct() {
-  local pct="${1}"
-  if [[ "${pct}" -ge 90 ]]; then echo "red"
-  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
-  else echo "green"
-  fi
-}
 
 get_disk() {
   df "$HOME" | awk 'NR==2 {gsub(/%/,"",$5); print $5}'
@@ -46,8 +38,6 @@ plugin_output() {
 
   metric "💾" "${pct}%" "Disk usage: ${pct}%" "$(color_for_pct "${pct}")"
   detail_line "$(df -h "$HOME" | awk 'NR==2 {printf "Size: %s  Used: %s  Free: %s", $2, $3, $4}')"
-  menu_line "Refresh | refresh=true"
-  swiftbar_flush
 }
 
 swiftbar_run "$@"

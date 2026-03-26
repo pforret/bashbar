@@ -12,14 +12,6 @@ source "${SCRIPT_DIR}/core.sh"
 ## HELPERS
 #####################################################################
 
-color_for_pct() {
-  local pct="${1}"
-  if [[ "${pct}" -ge 90 ]]; then echo "red"
-  elif [[ "${pct}" -ge 75 ]]; then echo "orange"
-  else echo "green"
-  fi
-}
-
 battery_color() {
   local pct="${1}"
   if [[ "${pct}" -le 10 ]]; then echo "red"
@@ -127,11 +119,6 @@ plugin_output() {
     bat_state=$(pmset -g batt | awk '/-InternalBattery/{gsub(/;/,""); print $4}')
     metric "🔋" "${bat_pct}%" "Battery: ${bat_pct}% (${bat_state})" "$(battery_color "${bat_pct}")"
   fi
-
-  ## Footer
-  menu_line "Refresh | refresh=true"
-
-  swiftbar_flush
 }
 
 swiftbar_run "$@"

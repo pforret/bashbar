@@ -1,4 +1,4 @@
-# SwiftPlugins
+# pforret/bashbar
 
 A collection of [SwiftBar](https://github.com/swiftbar/SwiftBar) plugins written in Bash.
 
@@ -43,7 +43,7 @@ The Plugin Folder is detected automatically from SwiftBar's preferences.
 ## Architecture
 
 ```
-core.sh            # Shared framework (output helpers, install/uninstall, dispatch)
+core.sh            # Shared framework (env loading, output helpers, install/uninstall)
 template.1h.sh     # Template plugin - copy this to start a new plugin
 memory.5m.sh       # RAM usage plugin
 vitals.5m.sh       # System vitals plugin
@@ -51,7 +51,7 @@ vitals.5m.sh       # System vitals plugin
 
 ### core.sh
 
-Provides the SwiftBar output API and plugin management. Each plugin sources it with:
+Provides the SwiftBar output API, env loading, and plugin management. Each plugin sources it with:
 
 ```bash
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")" && pwd)"
@@ -63,18 +63,36 @@ This resolves symlinks, so plugins work correctly when installed via `./plugin.s
 #### Output functions
 
 | Function | Purpose |
-|----------|---------|
+|---|---|
 | `metric "icon" "header" "menu text" "color"` | Cycling menu bar item + dropdown entry (icon shared) |
-| `menu_line "text"` | Dropdown-only item with separator (e.g. Refresh) |
+| `menu_line "text"` | Dropdown-only item with separator |
 | `detail_line "text"` | Indented sub-item in dropdown |
-| `swiftbar_flush` | Print all buffered output (call once at end) |
 
-Output is buffered so that all header lines appear before dropdown content, regardless of call order. This lets you group data collection and output per metric.
+Output is buffered so that all header lines appear before dropdown content, regardless of call order. This lets you group data collection and output per metric. A Refresh button and flush are appended automatically by `swiftbar_run`.
+
+#### Helper functions
+
+| Function | Purpose |
+|---|---|
+| `color_for_pct <pct> [warn] [crit] [default]` | Returns color based on percentage thresholds |
+
+`color_for_pct` defaults: warn=75 (orange), crit=90 (red), default=white. Override thresholds per metric, e.g. `color_for_pct 80 50 80 green`.
+
+#### Environment loading
+
+On startup, `core.sh` automatically loads `.env` files in this order (later files override earlier ones):
+
+1. `${SCRIPT_DIR}/.env` — shared secrets for all plugins in the repo
+2. `${SCRIPT_DIR}/.${prefix}.env` — plugin-specific (e.g. `.check_api.env`)
+3. `${PLUGIN_DIR}/.env` — shared secrets in SwiftBar Plugin Folder
+4. `${PLUGIN_DIR}/.${prefix}.env` — plugin-specific in SwiftBar Plugin Folder
+
+The prefix is the plugin name without refresh interval and extension (e.g. `check_api` from `check_api.1h.sh`). This lets you store API keys or other secrets outside the repo.
 
 #### Management
 
 | Function | Purpose |
-|----------|---------|
+|---|---|
 | `swiftbar_run "$@"` | Dispatch: `install`, `uninstall`, `help`, or run `plugin_output()` |
 
 ### Plugin structure
@@ -90,10 +108,9 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")" && pwd)"
 source "${SCRIPT_DIR}/core.sh"
 
 plugin_output() {
-  metric "🔧" "42" "My metric: 42" "green"
+  local value=42
+  metric "🔧" "${value}" "My metric: ${value}" "$(color_for_pct "${value}")"
   detail_line "Some detail here"
-  menu_line "Refresh | refresh=true"
-  swiftbar_flush
 }
 
 swiftbar_run "$@"
