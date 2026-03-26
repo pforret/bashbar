@@ -1,6 +1,13 @@
+![GitHub top language](https://img.shields.io/github/languages/top/pforret/bashbar)
+![GitHub last commit](https://img.shields.io/github/last-commit/pforret/bashbar)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/pforret/bashbar/total)
+
+
 # pforret/bashbar
 
-A collection of [SwiftBar](https://github.com/swiftbar/SwiftBar) plugins written in Bash.
+![](assets/unsplash.beer.jpg)
+
+A collection of [SwiftBar](https://github.com/swiftbar/SwiftBar) plugins written in Bash and the toolkit to make new ones
 
 SwiftBar lets you add custom items to the macOS menu bar using simple scripts. This repo provides a shared framework (`core.sh`) and several ready-to-use plugins.
 
